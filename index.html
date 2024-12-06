@@ -1,0 +1,60 @@
+<html>
+<h1>🀄 mjai-reviewer</h1>
+Use local models and AkagiOT to review your 4p and 3p mahjong games
+<br>
+Model reviews may work, but not intended for Tonpuusen or games with non-standard rules.
+<br>
+{% if captchakey %}
+<script
+  src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback"
+  defer
+></script>
+{% endif %}
+<br>
+<form method="post" action="/review">
+<label for="id">Enter Paipu URL or ID (Auto detect Tenhou, Majsoul, RiichiCity, tenhou6 json, 3p or 4p):</label><br>
+{% if url %}
+<input type="text" id="id" name="id" style="width: 700px;" value="{{ url|e }}" required><br>
+{% else %}
+<input type="text" id="id" name="id" style="width: 700px;" required><br>
+{% endif %}
+<br>
+<label for="actor">Seat:</label><br>
+<select name="actor">
+<option value="-1">Auto</option>
+<option value="0">East</option>
+<option value="1">South</option>
+<option value="2">West</option>
+<option value="3">North(invalid in 3p)</option>
+</select>
+<br>
+<label for="engine">Engine(Model):</label><br>
+<select name="engine">
+<option value="1">Local Model</option>
+<option value="2">AkagiOT</option>
+</select>
+<br>
+<label for="ui">UI:</label><br>
+<select name="ui">
+    <option value="1">Classic</option>
+    <option value="2">KillerDucky (experimental)</option>
+    </select>
+    <br>
+<label for="lang">Language:</label><br>
+<select name="lang">
+<option value="en">English</option>
+<option value="zh" selected="selected">Chinese</option>
+<option value="ja">Japanese</option>
+<option value="ko">Korean</option>
+</select>
+<br>
+{% if captchakey %}
+<div class="cf-turnstile" data-sitekey="{{ captchakey }}"></div>
+{% endif %}
+<br>
+<input type="submit" value="Check">
+</form>
+<br>
+<br><b>Links</b>
+<br><a href="https://github.com/hidacow/mjai-reviewer-ui" rel="noopener noreferrer" target="_blank">GitHub</a>
+</html>
