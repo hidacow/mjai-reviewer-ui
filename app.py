@@ -246,7 +246,7 @@ async def review(request: Request):
     target = 0
     if not paipu_raw:
         raise HTTPException(status_code=400, detail="id is required")
-    if len(paipu_raw) > 10240:
+    if len(paipu_raw) > 65536:
         raise HTTPException(status_code=413, detail="sorry, your paipu is too large")
     if target_override not in range(-1, 4):
         raise HTTPException(status_code=400, detail="actor is invalid")
@@ -262,7 +262,7 @@ async def review(request: Request):
         language = "en"  # there is no difference in language for new ui
 
     pat_tenhou = re.compile(r"\d{10}gm-\w{4}-\w{4}-\w{8}")
-    pat_majsoul = re.compile(r"\w{6}-\w{8}-\w{4}-\w{4}-\w{4}-\w{12}(.*)")
+    pat_majsoul = re.compile(r"\w{6}-\w{8}-\w{4}-\w{4}-\w{4}-\w{12}((\w|-|_)*)")
     pat_rcity = re.compile(r"[a-z0-9]{20}(@[0-4])?")
 
     if paipuid := pat_tenhou.search(paipu_raw):
