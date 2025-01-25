@@ -15,7 +15,7 @@ Frontend UI and task runner for [mjai-reviewer](https://github.com/Equim-chan/mj
 
 - Auto detect target from the input or specify one
 
-- Select different engines(models), UI (classic or [Killerducky](https://github.com/killerducky/killer_mortal_gui)), languages for reviewing
+- Select multiple different engines(models), UI (classic or [Killerducky](https://github.com/killerducky/killer_mortal_gui)), languages for reviewing
 
   > Akochan is not supported
 
@@ -53,7 +53,7 @@ You need the following for this project to work
 
     > You might need to implement 3-player `libriichi3p` library yourself, or get one from the Akagi project through donation
 
-- A working config for each version of Mortal, including:
+- A valid config for each version of Mortal, including:
 
   - A trained model file
   - (optional) a GRP model file (you can remove the need of it by modifying some code in mortal)

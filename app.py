@@ -33,7 +33,7 @@ async def task_worker():
     while True:
         task = await task_queue_local.get()
         try:
-            print("Task started", task[4])
+            print("Task started", task[3])
             await run_task(*task)
         finally:
             task_queue_local.task_done()
@@ -43,7 +43,7 @@ async def task_worker_ot():
     while True:
         task = await task_queue_ot.get()
         try:
-            print("Task started", task[4])
+            print("Task started", task[3])
             await run_task(*task)
         finally:
             task_queue_ot.task_done()
@@ -125,8 +125,7 @@ async def download_log(id: str, platform: str):
 
 
 async def run_task(
-    nplayer: int,
-    engine: int,
+    engineconfig: dict,
     target: int,
     paipu: str,
     taskid: str,
@@ -134,21 +133,13 @@ async def run_task(
     isjson: bool = False,
 ):
     args = [
-        config["reviewer3p"] if nplayer == 3 else config["reviewer4p"],
+        engineconfig["reviewer"],
         "-e",
         "mortal",
         "--mortal-exe",
-        (
-            (config["local3p"] if engine == 1 else config["akagiot3p"])
-            if nplayer == 3
-            else (config["local4p"] if engine == 1 else config["akagiot4p"])
-        ),
+        engineconfig["mortal"],
         "--mortal-cfg",
-        (
-            (config["local3p_conf"] if engine == 1 else config["akagiot3p_conf"])
-            if nplayer == 3
-            else (config["local4p_conf"] if engine == 1 else config["akagiot4p_conf"])
-        ),
+        engineconfig["config"],
         "--show-rating",
         "--lang",
         language,
@@ -183,10 +174,6 @@ def get_url(fn: str, ui: int, nplayer: int):
             return f"/ui/3p.html?data=/results/{fn}"
         else:
             return f"/ui/?data=/results/{fn}"
-
-
-def parse_custom_json(paipudata):
-    pass
 
 
 def parse_player_num(paipudata):
@@ -240,7 +227,8 @@ async def review(request: Request):
     validation_task = asyncio.create_task(validate_turnstile(captcha))
     paipu_raw = form.get("id")
     target_override = int(form.get("actor", -1))
-    engine = int(form.get("engine", 0))
+    model3p = int(form.get("model3p", 0))
+    model4p = int(form.get("model4p", 0))
     ui = int(form.get("ui", 0))
     language = form.get("lang")
     target = 0
@@ -250,10 +238,10 @@ async def review(request: Request):
         raise HTTPException(status_code=413, detail="sorry, your paipu is too large")
     if target_override not in range(-1, 4):
         raise HTTPException(status_code=400, detail="actor is invalid")
-    if not engine:
-        raise HTTPException(status_code=400, detail="engine is required")
-    if engine not in [1, 2]:
-        raise HTTPException(status_code=400, detail="engine is not supported")
+    if config["models3p"] and model3p not in range(len(config["models3p"])):
+        raise HTTPException(status_code=400, detail="3p model id is invalid")
+    if config["models4p"] and model4p not in range(len(config["models4p"])):
+        raise HTTPException(status_code=400, detail="4p model id is invalid")
     if language not in ["ja", "en", "zh", "ko"]:
         raise HTTPException(status_code=400, detail="language is not supported")
     if ui not in [1, 2]:
@@ -353,13 +341,20 @@ async def review(request: Request):
         target = target_override
     if target < 0 or target >= playernum:
         raise HTTPException(status_code=400, detail="Invalid actor")
+    engine = model3p if playernum == 3 else model4p
+    tmp = config["models3p" if playernum == 3 else "models4p"]
+    if not tmp:
+        raise HTTPException(
+            status_code=503, detail=f"Cannot review {playernum}p games without a model"
+        )
+    engineconfig = tmp[engine]
 
     taskid = f"{paipuid}{target}{engine}{language}{ui}"
     filename = sha256(taskid.encode()).hexdigest()[:16]
 
     url = (
         app.url_path_for("process", filename=filename + ext)
-        + f"?p={playernum}&e={engine}"
+        + f"?p={playernum}&e={int(1+engineconfig['is_online'])}"
     )
 
     if os.path.exists(os.path.join(outputpath, filename) + ext):
@@ -370,18 +365,18 @@ async def review(request: Request):
     with open(os.path.join(lockpath, filename), "w") as f:
         f.write(time.strftime("%Y-%m-%d %H:%M:%S"))
 
-    task_queue = task_queue_local if engine == 1 else task_queue_ot
+    task_queue = task_queue_ot if engineconfig["is_online"] else task_queue_local
     qsize = task_queue.qsize()
-    qsize_config = int(config["max_queue" if engine == 1 else "max_queue_ot"])
+    qsize_config = int(
+        config["max_queue_ot" if engineconfig["is_online"] else "max_queue"]
+    )
     if qsize_config and qsize >= qsize_config:
         os.remove(os.path.join(lockpath, filename))
         return JSONResponse(
             {"error": "Server at maximum capacity, try again later"}, status_code=503
         )
 
-    task_queue.put_nowait(
-        (playernum, engine, target, paipu_fn, filename, language, ui != 1)
-    )
+    task_queue.put_nowait((engineconfig, target, paipu_fn, filename, language, ui != 1))
     print("Task added", filename)
     return RedirectResponse(url, status_code=302)
 
@@ -427,7 +422,12 @@ app.mount("/results", StaticFiles(directory="outputs"), name="results")
 
 @app.get("/")
 async def root_html(request: Request, url: str | None = None):
-    context = {"captchakey": config.get("turnstile_sitekey"), "request": request}
+    context = {
+        "captchakey": config.get("turnstile_sitekey"),
+        "request": request,
+        "models3p": config["models3p"],
+        "models4p": config["models4p"],
+    }
     if url:
         context["url"] = url
 

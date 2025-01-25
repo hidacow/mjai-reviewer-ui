@@ -1,6 +1,6 @@
 <html>
-<h1>🀄 mjai-reviewer</h1>
-Use local models and AkagiOT to review your 4p and 3p mahjong games
+<h1>🀄 mjai-reviewer UI</h1>
+Use local or online models to review your 4p and 3p mahjong games
 <br>
 Model reviews may work, but not intended for Tonpuusen or games with non-standard rules.
 <br>
@@ -28,11 +28,24 @@ Model reviews may work, but not intended for Tonpuusen or games with non-standar
 <option value="3">North(invalid in 3p)</option>
 </select>
 <br>
-<label for="engine">Engine(Model):</label><br>
-<select name="engine">
-<option value="1">Local Model</option>
-<option value="2">AkagiOT</option>
+{% if models3p %}
+<label for="model3p">Engine(Model) for 3-player games:</label><br>
+<select name="model3p">
+{% for item in models3p %}
+  <option value="{{ loop.index0 }}">{{ item.name }}</option>
+{% endfor %}
 </select>
+<br>
+{% endif %}
+{% if models4p %}
+<label for="model4p">Engine(Model) for 4-player games:</label><br>
+<select name="model4p">
+{% for item in models4p %}
+  <option value="{{ loop.index0 }}">{{ item.name }}</option>
+{% endfor %}
+</select>
+<br>
+{% endif %}
 <br>
 <label for="ui">UI:</label><br>
 <select name="ui">
@@ -56,5 +69,5 @@ Model reviews may work, but not intended for Tonpuusen or games with non-standar
 </form>
 <br>
 <br><b>Links</b>
-<br><a href="https://github.com/hidacow/mjai-reviewer-ui" rel="noopener noreferrer" target="_blank">GitHub</a>
+<br><a href="https://github.com/hidacow/mjai-reviewer-ui" rel="noopener" target="_blank">GitHub</a>
 </html>
