@@ -258,7 +258,7 @@ async def review(request: Request):
         pat_target = re.compile(r"&tw=(\d+)")
         target = pat_target.search(paipu_raw)
         if target:
-            target = target.group(1)
+            target = int(target.group(1))
         elif target_override == -1:
             raise HTTPException(
                 status_code=400, detail="Failed to infer target from url"
@@ -322,8 +322,8 @@ async def review(request: Request):
 
     if platform == "majsoul":
         try:
-            target = paipudata["_target_actor"]
-        except KeyError:
+            target = int(paipudata["_target_actor"])
+        except Exception as e:
             if target_override == -1:
                 raise HTTPException(
                     status_code=400, detail="Failed to infer target from url"
