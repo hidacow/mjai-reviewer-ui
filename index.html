@@ -1,73 +1,94 @@
+<!DOCTYPE html>
 <html>
-<h1>🀄 mjai-reviewer UI</h1>
-Use local or online models to review your 4p and 3p mahjong games
-<br>
-Model reviews may work, but not intended for Tonpuusen or games with non-standard rules.
-<br>
-{% if captchakey %}
-<script
-  src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback"
-  defer
-></script>
-{% endif %}
-<br>
-<form method="post" action="/review">
-<label for="id">Enter Paipu URL or ID (Auto detect Tenhou, Majsoul, RiichiCity, tenhou6 json, 3p or 4p):</label><br>
-{% if url %}
-<input type="text" id="id" name="id" style="width: 700px;" value="{{ url|e }}" required><br>
-{% else %}
-<input type="text" id="id" name="id" style="width: 700px;" required><br>
-{% endif %}
-<br>
-<label for="actor">Seat:</label><br>
-<select name="actor">
-<option value="-1">Auto</option>
-<option value="0">East</option>
-<option value="1">South</option>
-<option value="2">West</option>
-<option value="3">North(invalid in 3p)</option>
-</select>
-<br>
-{% if models3p %}
-<label for="model3p">Engine(Model) for 3-player games:</label><br>
-<select name="model3p">
-{% for item in models3p %}
-  <option value="{{ loop.index0 }}">{{ item.name }}</option>
-{% endfor %}
-</select>
-<br>
-{% endif %}
-{% if models4p %}
-<label for="model4p">Engine(Model) for 4-player games:</label><br>
-<select name="model4p">
-{% for item in models4p %}
-  <option value="{{ loop.index0 }}">{{ item.name }}</option>
-{% endfor %}
-</select>
-<br>
-{% endif %}
-<br>
-<label for="ui">UI:</label><br>
-<select name="ui">
-    <option value="1">Classic</option>
-    <option value="2">KillerDucky (experimental)</option>
-    </select>
-    <br>
-<label for="lang">Language:</label><br>
-<select name="lang">
-<option value="en">English</option>
-<option value="zh" selected="selected">Chinese</option>
-<option value="ja">Japanese</option>
-<option value="ko">Korean</option>
-</select>
-<br>
-{% if captchakey %}
-<div class="cf-turnstile" data-sitekey="{{ captchakey }}"></div>
-{% endif %}
-<br>
-<input type="submit" value="Check">
-</form>
-<br>
-<br><b>Links</b>
-<br><a href="https://github.com/hidacow/mjai-reviewer-ui" rel="noopener" target="_blank">GitHub</a>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>🀄 mjai-reviewer UI</title>
+  <link rel="stylesheet" href="static/index.css">
+  {% if captchakey %}
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" defer></script>
+  {% endif %}
+</head>
+
+<body>
+  <div class="container">
+    <h1>🀄 mjai-reviewer UI</h1>
+    <p class="help" style="text-align: center;">Use local or online models to review your 4p and 3p mahjong games</p>
+    <section class="form-section" id="review-section">
+      <h2>Review your game</h2>
+      <div class="notification">
+        <b>Notice:</b>
+        <p>Models are trained with standard rules (Hanchan), it may work but not intended for reviewing Tonpuusen or
+          games with non-standard rules</p>
+      </div>
+      <form method="post" action="/review">
+        <label for="id">Enter Paipu URL or ID<br><span class="small">(Auto detect 3/4-player Tenhou, Majsoul,
+            RiichiCity, tenhou.net/6 JSON)</span></label>
+        {% if url %}
+        <input type="text" id="id" name="id" value="{{ url|e }}" required>
+        {% else %}
+        <input type="text" id="id" name="id" required>
+        {% endif %}
+
+        <label for="actor">Seat</label>
+        <select name="actor" id="actor">
+          <option value="-1">Auto (Infer from Paipu URL)</option>
+          <option value="0">East</option>
+          <option value="1">South</option>
+          <option value="2">West</option>
+          <option value="3">North (Invalid in 3-player games)</option>
+        </select>
+
+        {% if models3p %}
+        <label for="model3p">Engine(Model) for 3-player games:</label>
+        <select name="model3p" id="model3p">
+          {% for item in models3p %}
+          <option value="{{ loop.index0 }}">{{ item.name }}</option>
+          {% endfor %}
+        </select>
+        {% endif %}
+
+        {% if models4p %}
+        <label for="model4p">Engine(Model) for 4-player games:</label>
+        <select name="model4p" id="model4p">
+          {% for item in models4p %}
+          <option value="{{ loop.index0 }}">{{ item.name }}</option>
+          {% endfor %}
+        </select>
+        {% endif %}
+
+        <label for="ui">UI</label>
+        <select name="ui" id="ui">
+          <option value="1">Classic</option>
+          <option value="2">KillerDucky (beta)</option>
+        </select>
+
+        <label for="lang">Language</label>
+        <select name="lang" id="lang">
+          <option value="en">English</option>
+          <option value="zh" selected>中文</option>
+          <option value="ja">日本語</option>
+          <option value="ko">한국어</option>
+        </select>
+
+        {% if captchakey %}
+        <label for=""></label>
+        <div class="cf-turnstile" data-sitekey="{{ captchakey }}"></div>
+        {% endif %}
+
+        <input type="submit" value="Submit">
+      </form>
+    </section>
+  </div>
+
+  <div class="footer">
+    <p>
+      Links：
+      <a href="https://github.com/hidacow/mjai-reviewer-ui" rel="noopener" target="_blank">GitHub</a>
+    </p>
+  </div>
+
+</body>
+
 </html>

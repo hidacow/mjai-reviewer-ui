@@ -443,6 +443,7 @@ async def ui_html():
 
 
 app.mount("/ui", StaticFiles(directory="ui"), name="ui")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 if __name__ == "__main__":

@@ -90,6 +90,7 @@ By default, the directory structure will be:
 - `outputs/` for output htmls and json
 - `paipus/` for downloaded paipus
 - `ui/` killer_mortal_gui static files
+- `static/` static files
 - `app.py` : main file
 - `config.py` : your config
 - `index.html`
