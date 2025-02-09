@@ -1,4 +1,5 @@
 import os
+import sys
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
 from urllib.parse import parse_qs, urlparse
@@ -8,11 +9,13 @@ import json
 import re
 import aiohttp
 from hashlib import sha256
-import sys
 import time
+from datetime import datetime
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi.templating import Jinja2Templates
+import toml
+from filelock import AsyncFileLock
 
 templates = Jinja2Templates(directory=".")
 from config import config
@@ -20,13 +23,19 @@ from config import config
 
 task_queue_local = asyncio.Queue(config["max_queue"])
 task_queue_ot = asyncio.Queue(config["max_queue_ot"])
+if config["enable_dispatch"] and config["dipatch_bots_num"] > 0:
+    dispatcher_semaphore = asyncio.BoundedSemaphore(int(config["dipatch_bots_num"]))
+else:
+    dispatcher_semaphore = None
+active_bots = set()
 
-for dirname in ["paipus", "outputs", "locks"]:
+for dirname in ["paipus", "outputs", "locks", "botlog"]:
     if not os.path.exists(dirname):
         os.mkdir(dirname)
 paipupath = os.path.abspath("paipus")
 outputpath = os.path.abspath("outputs")
 lockpath = os.path.abspath("locks")
+botlogpath = os.path.abspath("botlog")
 
 
 async def task_worker():
@@ -47,6 +56,61 @@ async def task_worker_ot():
             await run_task(*task)
         finally:
             task_queue_ot.task_done()
+
+async def run_dispatch_bot(model, roomid, speed):
+    async with dispatcher_semaphore:
+        try:
+            with open(model["config"], encoding='utf-8') as f:
+                model_config = toml.load(f)
+                modelpath = model_config['control']['state_file']
+            print(f"Start dispatching bot {model['name']} ({modelpath}) to room", roomid)
+            params = [
+                os.path.realpath(sys.executable),
+                "3p.py",
+                "--model",
+                modelpath,
+                "--room",
+                str(roomid),
+                "--speed",
+                str(speed),
+            ]
+            print(params)
+            process = await asyncio.create_subprocess_exec(
+                *params,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+                cwd=config["tenhoubot_path"],
+            )
+            stdout, _ = await process.communicate()
+            if process.returncode != 0:
+                print(f"Failed to dispatch bot {model['name']} ({modelpath}) to room", roomid)
+                print(stdout.decode())
+                return
+                # print(stderr.decode())
+            pat_tenhou = re.compile(r"\d{10}gm-\w{4}-\w{4}-\w{8}&tw=\d")
+            ids = set(pat_tenhou.findall(stdout.decode()))
+            logurl = ""
+            if ids:
+                for id in ids:
+                    print(f"https://tenhou.net/0/?log={id}")
+                    logurl = f"https://tenhou.net/0/?log={id}"
+            # only one log id is expected
+
+            if len(ids) == 0:
+                print("Warning: no log ids found")
+                return
+            
+            if len(ids) > 1:
+                print("Warning: multiple log ids found")
+            
+            fn = datetime.now().strftime("%Y-%m-%d") + ".txt"
+            flock = AsyncFileLock(os.path.join(botlogpath, f"{fn}.lock"))
+            async with flock:
+                with open(os.path.join(botlogpath, fn), "a") as f:
+                    f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} {model['name']} L{roomid} speed{speed} {logurl}\n")
+        finally:
+            active_bots.discard(asyncio.current_task())
+            
 
 
 async def cleanup_files():
@@ -156,8 +220,8 @@ async def run_task(
 
     process = await asyncio.create_subprocess_exec(
         *args,
-        stdout=sys.stdout,  # asyncio.subprocess.PIPE,
-        stderr=sys.stderr,  # asyncio.subprocess.PIPE,
+        # stdout=asyncio.subprocess.PIPE,
+        # stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await process.communicate()
     if process.returncode != 0:
@@ -301,25 +365,24 @@ async def review(request: Request):
     ext = ".html" if ui == 1 else ".json"
     paipu_fn = sha256(paipuid.encode()).hexdigest()[:16]
     paipud = os.path.join(paipupath, paipu_fn)
+    paipulock = AsyncFileLock(paipud + ".lock", timeout=5)
     if not await validation_task:
         raise HTTPException(status_code=400, detail="Invalid captcha")
     print(platform, paipuid, target)
-    if os.path.exists(paipud):
-        try:
-            with open(paipud, "r", encoding="utf-8") as f:
-                paipudata = json.load(f)
-        except Exception as e:
-            raise HTTPException(status_code=503, detail="Failed to load cached paipu")
-    else:
-        f = open(paipud, "w", encoding="utf-8")
-        paipudata = await download_log(paipuid, platform)
-        if type(paipudata) is JSONResponse:
-            f.close()
-            os.remove(paipud)
-            return paipudata
-        json.dump(paipudata, f)
-        f.close()
-
+    async with paipulock:
+        if os.path.exists(paipud):
+            try:
+                with open(paipud, "r", encoding="utf-8") as f:
+                    paipudata = json.load(f)
+            except Exception as e:
+                raise HTTPException(status_code=503, detail="Failed to load cached paipu")
+        else:
+            paipudata = await download_log(paipuid, platform)
+            if type(paipudata) is JSONResponse:
+                return paipudata
+            with open(paipud, "w", encoding="utf-8") as f:
+                json.dump(paipudata, f, ensure_ascii=False)
+                
     if platform == "majsoul":
         try:
             target = int(paipudata["_target_actor"])
@@ -427,6 +490,8 @@ async def root_html(request: Request, url: str | None = None):
         "request": request,
         "models3p": config["models3p"],
         "models4p": config["models4p"],
+        "enable_dispatch": config["enable_dispatch"],
+        "enable_botlog": config["enable_botlog"],
     }
     if url:
         context["url"] = url
@@ -436,14 +501,90 @@ async def root_html(request: Request, url: str | None = None):
         context=context,
     )
 
+@app.post("/dispatch-bot")
+async def dispatch(request: Request):
+    form = await request.form()
+    if not config["enable_dispatch"]:
+        raise HTTPException(status_code=503, detail="Dispatch is disabled")
+    captcha = form.get("cf-turnstile-response")
+    validation_task = asyncio.create_task(validate_turnstile(captcha))
+    roomid = form.get("roomid")
+    try:
+        roomid = int(roomid)
+        assert 1000 <= roomid < 10000
+    except:
+        raise HTTPException(status_code=400, detail="Invalid roomid")
+    botmodels = []
+    for i in range(2):
+        bot = form.get(f"bot{i}")
+        if bot is None or bot == "":
+            continue
+        try:
+            bot = int(bot)
+            assert 0 <= bot < len(config["models3p"])
+        except:
+            raise HTTPException(status_code=400, detail=f"Invalid bot{i}")
+        if not config["models3p"][bot]["can_dispatch"]:
+            raise HTTPException(status_code=400, detail=f"bot{bot} model not available for dispatch")
+        botmodels.append(bot)
+    if not botmodels:
+        raise HTTPException(status_code=400, detail="No bot selected")
+    speed = form.get("speed")
+    if speed not in ["0", "1", "2"]:
+        raise HTTPException(status_code=400, detail="Invalid speed")
+    speed = int(speed)
+    if not await validation_task:
+        raise HTTPException(status_code=400, detail="Invalid captcha")
+    quantity = len(botmodels)
+    if len(active_bots) + quantity > int(config["dipatch_bots_num"]):
+        raise HTTPException(status_code=503, detail="No enough available bot for dispatch, try again later")
+    try:
+        for model in botmodels:
+            task = asyncio.create_task(run_dispatch_bot(config["models3p"][model], roomid, speed))
+            active_bots.add(task)
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=503, detail="Failed to dispatch bots, try again later")
+    
+    return templates.TemplateResponse(
+        "dispatch.html",
+        context={
+            "roomid": roomid,
+            "request": request,
+        },
+    )
+
+@app.get("/available-bots")
+async def available_bots():
+    total = int(config["dipatch_bots_num"])
+    if total <= 0:
+        total = 0
+    available = total - len(active_bots)
+    return JSONResponse({"available": available, "total": total})
 
 @app.get("/ui/")
 async def ui_html():
     return FileResponse("ui/index.html")
 
+@app.get("/botlog/")
+async def list_botlog(request: Request):
+    if not config["enable_botlog"]:
+        raise HTTPException(status_code=403, detail="botlog disabled")
+    try:
+        files = sorted(
+            filter(lambda f: f.endswith(".txt"), os.listdir(botlogpath)),
+            key=lambda f: os.path.getmtime(os.path.join(botlogpath, f)),
+            reverse=True
+        )
+    except Exception as e:
+        files = []
+    return templates.TemplateResponse("botlog.html", {"request": request, "files": files})
+
 
 app.mount("/ui", StaticFiles(directory="ui"), name="ui")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+if config["enable_botlog"]:
+    app.mount("/botlog", StaticFiles(directory=botlogpath), name="botlog")
 
 
 if __name__ == "__main__":

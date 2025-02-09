@@ -11,6 +11,7 @@ config = {
             "mortal": "/path/to/exe-wrapper.exe or /mortal for 3 player game",
             "config": "/path/to/config.toml for 3 player game",
             "is_online": False,
+            "can_dispatch": True,
         },
         {
             "name": "local 3p model 2",
@@ -18,6 +19,7 @@ config = {
             "mortal": "...", # diffrent folder from other models recommended
             "config": "...", # diffrent folder from other models recommended  
             "is_online": False,
+            "can_dispatch": True,
         },
         {
             "name": "online model eg. AkagiOT",
@@ -25,6 +27,7 @@ config = {
             "mortal": "/path/to/wrapper for AkagiOT bot",
             "config": "/path/to/config.toml for AkagiOT bot",
             "is_online": True,
+            "can_dispatch": False,
         },
     ],
     "models4p": [
@@ -34,6 +37,7 @@ config = {
             "mortal": "/path/to/exe-wrapper.exe or /mortal for 4 player game",
             "config": "/path/to/config.toml for 4 player game",
             "is_online": False,
+            "can_dispatch": False,
         },
         {
             "name": "online model eg. AkagiOT",
@@ -41,6 +45,7 @@ config = {
             "mortal": "/path/to/wrapper for AkagiOT bot",
             "config": "/path/to/config.toml for AkagiOT bot",
             "is_online": True,
+            "can_dispatch": False,
         },
     ],
     "turnstile_sitekey": "",    # captcha is disabled if sitekey and secret is empty
@@ -51,4 +56,8 @@ config = {
     "max_queue_ot": 0,  # max queue size, 0 to disable
     "file_expire": 0,  # 1296000, # Retain paipu and output files for 15 days, 0 to disable
     "clean_interval": 0,  # 3600,   # Clean paipu and output files every hour, 0 to disable
+    "enable_dispatch": False,    # enable 'Play with you' feature , see README.md
+    "enable_botlog": True,
+    "dipatch_bots_num": 4,
+    "tenhoubot_path": "tenhoubot",
 }

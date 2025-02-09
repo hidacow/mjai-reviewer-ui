@@ -1,109 +1,144 @@
-
 body {
-    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    color: #333;
-  }
-  .container {
-    max-width: 800px;
-    margin: 40px auto;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    padding: 30px 40px;
-    margin-bottom: 30px;
-  }
-  h1, h2, h3 {
-    color: #444;
-  }
-  h1 {
-    text-align: center;
-    margin-bottom: 10px;
-  }
-  label {
-    display: block;
-    margin-top: 15px;
-    font-weight: bold;
-  }
-  input[type="text"],
-  input[type="url"],
-  input[type="number"],
-  textarea,
-  select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-  input[type="submit"],
-  button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 5px;
-    background: #4CAF50;
-    border: none;
-    color: #fff;
-    font-size: 1.1em;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  input[type="submit"]:hover,
-  button:hover {
-    background: #45a049;
-  }
-  .notification {
-    background: #e7f3fe;
-    border-left: 6px solid #2196F3;
-    padding: 15px 20px;
-    border-radius: 4px;
-    margin: 20px 0;
-  }
-  .help {
-    font-size: 0.9em;
-    color: #666;
-  }
-  .small {
-    font-size: 0.9em;
-    color: #888;
-  }
-  .form-section {
-    margin-bottom: 50px;
-  }
-  .checkbox-group p {
-    margin: 8px 0;
-  }
-  .checkbox-group label {
-    font-weight: normal;
-  }
-  .footer {
-    text-align: center;
-    font-size: 0.9em;
-    color: #777;
-    margin-top: 20px;
-    padding: 10px;
-  }
-  .footer a {
-    margin: 0 10px;
-    color: #2196F3;
-    text-decoration: none;
-  }
-  .footer a:hover {
-    text-decoration: underline;
-  }
-  .inline-group {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-  .inline-group input {
-    flex-grow: 1;
-  }
-  .inline-group button {
-    flex-shrink: 0;
-    width: auto;
-    padding: 10px 16px;
-  }
+  background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #333;
+  backdrop-filter: blur(10px);
+}
+
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px 40px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+h1,
+h2,
+h3 {
+  color: #444;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+input[type="text"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+input[type="submit"],
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 5px;
+  background: #4CAF50;
+  border: none;
+  color: #fff;
+  font-size: 1.1em;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+input[type="submit"]:hover,
+button:hover {
+  background: #45a049;
+}
+
+input[type="submit"]:disabled,
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.notification {
+  background: #e7f3fe;
+  border-left: 6px solid #2196F3;
+  padding: 15px 20px;
+  border-radius: 4px;
+  margin: 20px 0;
+}
+
+.help {
+  font-size: 0.9em;
+  color: #666;
+}
+
+.small {
+  font-size: 0.9em;
+  color: #888;
+}
+
+.form-section {
+  margin-bottom: 50px;
+}
+
+.checkbox-group p {
+  margin: 8px 0;
+}
+
+.checkbox-group label {
+  font-weight: normal;
+}
+
+.footer {
+  text-align: center;
+  font-size: 0.9em;
+  color: #777;
+  margin-top: 20px;
+  padding: 10px;
+}
+
+.footer a {
+  margin: 0 10px;
+  color: #2196F3;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+.inline-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.inline-group input {
+  flex-grow: 1;
+}
+
+.inline-group button {
+  flex-shrink: 0;
+  width: auto;
+  padding: 10px 16px;
+}
+
+.strong {
+  font-weight: bold;
+  color: orangered;
+}

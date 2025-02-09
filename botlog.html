@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bot Logs</title>
+</head>
+<body>
+    <h1>Bot Logs</h1>
+    {% for file in files %}
+        <a href="{{ file }}">{{ file }}</a><br />
+    {% else %}
+        No logs found.<br />
+    {% endfor %}
+</body>
+</html>

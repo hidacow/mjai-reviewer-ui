@@ -27,12 +27,15 @@ Frontend UI and task runner for [mjai-reviewer](https://github.com/Equim-chan/mj
 
 - Queue size display in loading page
 
+- 'Play with you' feature in tenhou private lobby
+
+
 ## Get started
 
 ### Install Requirements
 
 ```bash
-pip install fastapi[standard] uvicorn[standard] aiohhttp
+pip install fastapi[standard] uvicorn[standard] aiohhttp "filelock>3.15" toml
 ```
 
 ### Set up dependencies
@@ -72,6 +75,22 @@ Clone [killer_mortal_gui](https://github.com/killerducky/killer_mortal_gui) into
 
 > You might need my fork of killer_mortal_gui for supporting 3-player mahjong
 
+### 'Play with you' feature
+
+This project supports the feature that summons Mortal instances into tenhou private lobbies, similar to the one on mjai.ekyu.moe
+
+The app will run `3p.py`  in `config['tenhoubot_path']` with the following params in a subprocess:
+
+```bash
+--model modelpath --room roomid[1000-9999] --speed speed[0-2]
+```
+
+The app will use regex to parse the output for tenhou log url for the logging feature.
+
+You may **implement the bot by yourself** in order to use this feature. (bot not open source for now)
+
+> The app only targets 3-player South for now. (Send at most 2 bots at a time)
+
 ### Run the app
 
 ```bash
@@ -86,6 +105,7 @@ nohup uvicorn app:app --host 127.0.0.1 --port 5000 > app.log 2>&1 &
 
 By default, the directory structure will be:
 
+- `botlog/` for bot logs in 'Play with you' feature
 - `locks/`for task locks
 - `outputs/` for output htmls and json
 - `paipus/` for downloaded paipus
@@ -95,6 +115,7 @@ By default, the directory structure will be:
 - `config.py` : your config
 - `index.html`
 - `loading.html`
+- ...
 
 ## Credits
 

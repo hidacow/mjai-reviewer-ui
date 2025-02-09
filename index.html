@@ -1,94 +1,190 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>🀄 mjai-reviewer UI</title>
+    <link rel="stylesheet" href="static/index.css" />
+    <script src="static/index.js"></script>
+    {% if captchakey %}
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback"
+      defer
+    ></script>
+    {% endif %}
+  </head>
+  <body>
+    <div class="container">
+      <h1>🀄 mjai-reviewer UI</h1>
+      <p class="help" style="text-align: center">
+        Use local models and AkagiOT to review your 4p and 3p mahjong games
+      </p>
+      <section class="form-section" id="review-section">
+        <h2>Review your game</h2>
+        <div class="notification">
+          <p>
+            Notice：Models are trained with standard rules (Hanchan), it may
+            work but not intended for reviewing Tonpuusen or games with
+            non-standard rules
+          </p>
+        </div>
+        <form method="post" action="/review">
+          <label for="id"
+            >Enter Paipu URL or ID<br /><span class="small"
+              >(Auto detect 3/4-player Tenhou, Majsoul, RiichiCity, tenhou.net/6
+              JSON)</span
+            ></label
+          >
+          {% if url %}
+          <input type="text" id="id" name="id" value="{{ url|e }}" required />
+          {% else %}
+          <input type="text" id="id" name="id" required />
+          {% endif %}
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>🀄 mjai-reviewer UI</title>
-  <link rel="stylesheet" href="static/index.css">
-  {% if captchakey %}
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" defer></script>
-  {% endif %}
-</head>
+          <label for="actor">Seat</label>
+          <select name="actor" id="actor">
+            <option value="-1">Auto (Infer from Paipu URL)</option>
+            <option value="0">East</option>
+            <option value="1">South</option>
+            <option value="2">West</option>
+            <option value="3">North (Invalid in 3-player games)</option>
+          </select>
 
-<body>
-  <div class="container">
-    <h1>🀄 mjai-reviewer UI</h1>
-    <p class="help" style="text-align: center;">Use local or online models to review your 4p and 3p mahjong games</p>
-    <section class="form-section" id="review-section">
-      <h2>Review your game</h2>
-      <div class="notification">
-        <b>Notice:</b>
-        <p>Models are trained with standard rules (Hanchan), it may work but not intended for reviewing Tonpuusen or
-          games with non-standard rules</p>
-      </div>
-      <form method="post" action="/review">
-        <label for="id">Enter Paipu URL or ID<br><span class="small">(Auto detect 3/4-player Tenhou, Majsoul,
-            RiichiCity, tenhou.net/6 JSON)</span></label>
-        {% if url %}
-        <input type="text" id="id" name="id" value="{{ url|e }}" required>
-        {% else %}
-        <input type="text" id="id" name="id" required>
-        {% endif %}
+          {% if models3p %}
+          <label for="model3p">Engine(Model) for 3-player games:</label>
+          <select name="model3p" id="model3p">
+            {% for item in models3p %}
+            <option value="{{ loop.index0 }}">{{ item.name }}</option>
+            {% endfor %}
+          </select>
+          {% endif %} {% if models4p %}
+          <label for="model4p">Engine(Model) for 4-player games:</label>
+          <select name="model4p" id="model4p">
+            {% for item in models4p %}
+            <option value="{{ loop.index0 }}">{{ item.name }}</option>
+            {% endfor %}
+          </select>
+          {% endif %}
 
-        <label for="actor">Seat</label>
-        <select name="actor" id="actor">
-          <option value="-1">Auto (Infer from Paipu URL)</option>
-          <option value="0">East</option>
-          <option value="1">South</option>
-          <option value="2">West</option>
-          <option value="3">North (Invalid in 3-player games)</option>
-        </select>
+          <label for="ui">UI</label>
+          <select name="ui" id="ui">
+            <option value="1">Classic</option>
+            <option value="2">KillerDucky (beta)</option>
+          </select>
 
-        {% if models3p %}
-        <label for="model3p">Engine(Model) for 3-player games:</label>
-        <select name="model3p" id="model3p">
-          {% for item in models3p %}
-          <option value="{{ loop.index0 }}">{{ item.name }}</option>
-          {% endfor %}
-        </select>
-        {% endif %}
+          <label for="lang">Language</label>
+          <select name="lang" id="lang">
+            <option value="en">English</option>
+            <option value="zh" selected>中文</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+          </select>
 
-        {% if models4p %}
-        <label for="model4p">Engine(Model) for 4-player games:</label>
-        <select name="model4p" id="model4p">
-          {% for item in models4p %}
-          <option value="{{ loop.index0 }}">{{ item.name }}</option>
-          {% endfor %}
-        </select>
-        {% endif %}
+          {% if captchakey %}
+          <label for=""></label>
+          <div
+            class="cf-turnstile"
+            data-sitekey="{{ captchakey }}"
+            data-callback="onTurnstileReview"
+          ></div>
 
-        <label for="ui">UI</label>
-        <select name="ui" id="ui">
-          <option value="1">Classic</option>
-          <option value="2">KillerDucky (beta)</option>
-        </select>
+          <input id="submitBtnReview" type="submit" value="Submit" disabled />
+          {% else %}
+          <input id="submitBtnReview" type="submit" value="Submit" />
+          {% endif %}
+        </form>
+      </section>
+      {% if enable_dispatch %}
+      <section class="form-section" id="dispatch-section">
+        <h2>Play with you (3-player South)</h2>
+        <div class="notification">
+          <p>You can summon 1~2 Mortal instances to a specific private lobby on Tenhou.</p>
+          <p>They will show up as NoName, and will wait no more than 2 minutes before the game starts.</p>
+          <p>Bots available: <span id="ab">...</span></p>
+        </div>
+        <form method="post" action="/dispatch-bot">
+          <label for="roomid">Tenhou lobby ID</label>
+          <div class="inline-group">
+            <input
+              type="number"
+              id="roomid"
+              name="roomid"
+              min="1000"
+              max="9999"
+              placeholder="1000~9999"
+              required
+            />
+            <button type="button" onclick="setRandomLobby()">🎲</button>
+          </div>
 
-        <label for="lang">Language</label>
-        <select name="lang" id="lang">
-          <option value="en">English</option>
-          <option value="zh" selected>中文</option>
-          <option value="ja">日本語</option>
-          <option value="ko">한국어</option>
-        </select>
+          <label for="speed">Speed</label>
+          <select name="speed" id="speed">
+            <option value="0">fast (instant)</option>
+            <option value="1" selected>medium</option>
+            <option value="2">slow</option>
+          </select>
 
-        {% if captchakey %}
-        <label for=""></label>
-        <div class="cf-turnstile" data-sitekey="{{ captchakey }}"></div>
-        {% endif %}
+          <label>Select Model</label>
+          <div class="checkbox-group">
+            <p>
+              <label for="bot0">AI #1:</label>
+              <select name="bot0" id="bot0">
+                {% for item in models3p %} {% if item['can_dispatch'] %}
+                <option value="{{ loop.index0 }}">{{ item.name }}</option>
+                {% endif %} {% endfor %}
+              </select>
+            </p>
+            <p>
+              <label for="bot1">AI #2:</label>
+              <select name="bot1" id="bot1" onchange="updateQuantity()">
+                <option value="">Off</option>
+                {% for item in models3p %} {% if item['can_dispatch'] %}
+                <option value="{{ loop.index0 }}">{{ item.name }}</option>
+                {% endif %} {% endfor %}
+              </select>
+            </p>
+            {# <p>
+              <label for="bot2">AI #3:</label>
+              <select name="bot2" id="bot2" onchange="updateQuantity()">
+                <option value="">Off</option>
+                {% for item in models3p %} {% if item['can_dispatch'] %}
+                <option value="{{ loop.index0 }}">{{ item.name }}</option>
+                {% endif %} {% endfor %}
+              </select>
+            </p> #}
+          </div>
 
-        <input type="submit" value="Submit">
-      </form>
-    </section>
-  </div>
+          <p>Selected quantity: <span id="selected-quantity">1</span></p>
 
-  <div class="footer">
-    <p>
-      Links：
-      <a href="https://github.com/hidacow/mjai-reviewer-ui" rel="noopener" target="_blank">GitHub</a>
-    </p>
-  </div>
+          {% if captchakey %}
+          <div
+            class="cf-turnstile"
+            data-sitekey="{{ captchakey }}"
+            data-callback="onTurnstileDispatch"
+          ></div>
 
-</body>
+          <input
+            id="submitBtnDispatch"
+            type="submit"
+            value="Submit"
+            disabled
+          />
+          {% else %}
+          <input id="submitBtnDispatch" type="submit" value="Submit" />
+          {% endif %}
+          {% if enable_botlog %}
+          <p><a href="/botlog">Logs</a></p>
+          {% endif %}
+        </form>
+      </section>
+      {% endif %}
+    </div>
 
+    <div class="footer">
+      <p>
+        Links：
+        <a href="https://github.com/hidacow/mjai-reviewer-ui" rel="noopener" target="_blank">GitHub</a>
+      </p>
+    </div>
+  </body>
 </html>

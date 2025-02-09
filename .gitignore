@@ -166,4 +166,5 @@ locks/
 outputs/
 paipus/
 ui/
+botlog/
 *.log
