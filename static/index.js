@@ -37,13 +37,16 @@ function onTurnstileReview() {
 }
 
 function onTurnstileDispatch() {
-  updateQuantity()
   document.getElementById("submitBtnDispatch").disabled = false;
+}
+
+function onloadTurnstileCallback() {
+  document.getElementById("submitBtnReview").disabled = true;
+  document.getElementById("submitBtnDispatch").disabled = true;
 }
 
 function init() {
   getAvailableBots();
-  updateQuantity()
   setInterval(() => {
     if (!document.hidden) {
       getAvailableBots();
