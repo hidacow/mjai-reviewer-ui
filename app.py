@@ -291,8 +291,8 @@ async def review(request: Request):
     validation_task = asyncio.create_task(validate_turnstile(captcha))
     paipu_raw = form.get("id")
     target_override = int(form.get("actor", -1))
-    model3p = int(form.get("model3p", 0))
-    model4p = int(form.get("model4p", 0))
+    model3p = form.get("model3p")
+    model4p = form.get("model4p")
     ui = int(form.get("ui", 0))
     language = form.get("lang")
     target = 0
@@ -302,9 +302,9 @@ async def review(request: Request):
         raise HTTPException(status_code=413, detail="sorry, your paipu is too large")
     if target_override not in range(-1, 4):
         raise HTTPException(status_code=400, detail="actor is invalid")
-    if config["models3p"] and model3p not in range(len(config["models3p"])):
+    if config["models3p"] and model3p not in config["models3p"]:
         raise HTTPException(status_code=400, detail="3p model id is invalid")
-    if config["models4p"] and model4p not in range(len(config["models4p"])):
+    if config["models4p"] and model4p not in config["models4p"]:
         raise HTTPException(status_code=400, detail="4p model id is invalid")
     if language not in ["ja", "en", "zh", "ko"]:
         raise HTTPException(status_code=400, detail="language is not supported")
@@ -520,8 +520,7 @@ async def dispatch(request: Request):
         if bot is None or bot == "":
             continue
         try:
-            bot = int(bot)
-            assert 0 <= bot < len(config["models3p"])
+            assert bot in config["models3p"]
         except:
             raise HTTPException(status_code=400, detail=f"Invalid bot{i}")
         if not config["models3p"][bot]["can_dispatch"]:

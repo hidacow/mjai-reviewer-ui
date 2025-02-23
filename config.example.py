@@ -3,9 +3,9 @@ config = {
     "tensoul_usr": "",
     "tensoul_pwd": "",
     "citylogs": "https://rc.honk.li/api/log",
-    "models3p": [
+    "models3p": {
         # to disable 3p or 4p reviewing, set the list to empty
-        {
+        "modelid1":{
             "name": "local 3p model 1",
             "reviewer": "/path/to/mjai-reviewer3p/target/release/mjai-reviewer",
             "mortal": "/path/to/exe-wrapper.exe or /mortal for 3 player game",
@@ -13,7 +13,7 @@ config = {
             "is_online": False,
             "can_dispatch": True,
         },
-        {
+        "local2":{
             "name": "local 3p model 2",
             "reviewer": "/path/to/mjai-reviewer3p/target/release/mjai-reviewer",
             "mortal": "...", # diffrent folder from other models recommended
@@ -21,7 +21,7 @@ config = {
             "is_online": False,
             "can_dispatch": True,
         },
-        {
+        "ol1":{
             "name": "online model eg. AkagiOT",
             "reviewer": "/path/to/mjai-reviewer3p/target/release/mjai-reviewer",
             "mortal": "/path/to/wrapper for AkagiOT bot",
@@ -29,9 +29,9 @@ config = {
             "is_online": True,
             "can_dispatch": False,
         },
-    ],
-    "models4p": [
-        {
+    },
+    "models4p": {
+        "local4p":{
             "name": "local 4p model",
             "reviewer": "/path/to/mjai-reviewer/target/release/mjai-reviewer",
             "mortal": "/path/to/exe-wrapper.exe or /mortal for 4 player game",
@@ -39,7 +39,7 @@ config = {
             "is_online": False,
             "can_dispatch": False,
         },
-        {
+        "online4p":{
             "name": "online model eg. AkagiOT",
             "reviewer": "/path/to/mjai-reviewer/target/release/mjai-reviewer",
             "mortal": "/path/to/wrapper for AkagiOT bot",
@@ -47,7 +47,7 @@ config = {
             "is_online": True,
             "can_dispatch": False,
         },
-    ],
+    },
     "turnstile_sitekey": "",    # captcha is disabled if sitekey and secret is empty
     "turnstile_secret": "",
     "max_task": 2,  # concurrent task limit

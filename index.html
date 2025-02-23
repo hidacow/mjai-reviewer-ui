@@ -53,15 +53,15 @@
           {% if models3p %}
           <label for="model3p">Engine(Model) for 3-player games:</label>
           <select name="model3p" id="model3p">
-            {% for item in models3p %}
-            <option value="{{ loop.index0 }}">{{ item.name }}</option>
+            {% for model in models3p.keys() %}
+            <option value="{{ model }}">{{ models3p[model]['name'] }}</option>
             {% endfor %}
           </select>
           {% endif %} {% if models4p %}
           <label for="model4p">Engine(Model) for 4-player games:</label>
           <select name="model4p" id="model4p">
-            {% for item in models4p %}
-            <option value="{{ loop.index0 }}">{{ item.name }}</option>
+            {% for model in models4p.keys() %}
+            <option value="{{ model }}">{{ models4p[model]['name'] }}</option>
             {% endfor %}
           </select>
           {% endif %}
@@ -129,8 +129,8 @@
             <p>
               <label for="bot0">AI #1:</label>
               <select name="bot0" id="bot0">
-                {% for item in models3p %} {% if item['can_dispatch'] %}
-                <option value="{{ loop.index0 }}">{{ item.name }}</option>
+                {% for model in models3p.keys() %} {% if models3p[model]['can_dispatch'] %}
+                <option value="{{ model }}">{{ models3p[model]['name'] }}</option>
                 {% endif %} {% endfor %}
               </select>
             </p>
@@ -138,20 +138,11 @@
               <label for="bot1">AI #2:</label>
               <select name="bot1" id="bot1" onchange="updateQuantity()">
                 <option value="">Off</option>
-                {% for item in models3p %} {% if item['can_dispatch'] %}
-                <option value="{{ loop.index0 }}">{{ item.name }}</option>
+                {% for model in models3p.keys() %} {% if models3p[model]['can_dispatch'] %}
+                <option value="{{ model }}">{{ models3p[model]['name'] }}</option>
                 {% endif %} {% endfor %}
               </select>
             </p>
-            {# <p>
-              <label for="bot2">AI #3:</label>
-              <select name="bot2" id="bot2" onchange="updateQuantity()">
-                <option value="">Off</option>
-                {% for item in models3p %} {% if item['can_dispatch'] %}
-                <option value="{{ loop.index0 }}">{{ item.name }}</option>
-                {% endif %} {% endfor %}
-              </select>
-            </p> #}
           </div>
 
           <p>Selected quantity: <span id="selected-quantity">1</span></p>
